@@ -299,6 +299,116 @@ code {
   filter: drop-shadow(0 20px 40px rgba(52, 114, 113, .16));
 }
 
+/* --------------------------------------------- Mapa do estado de São Paulo -- */
+
+/* O desenho do estado fica guardado num <svg> invisível e só é reaproveitado
+   com a tag <use>. Como ele nunca aparece sozinho, não precisa de tamanho. */
+.svg-oculto { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+/* Versão do hero: painel branco em cima da ilustração dos animais. */
+.hero-mapa {
+  max-width: 340px;
+  margin: 0 auto 1.1rem;
+  padding: .9rem 1rem .7rem;
+  background: var(--branco);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio-g);
+  box-shadow: var(--sombra-s);
+}
+.hero-mapa-svg { display: block; width: 100%; height: auto; }
+.hero-mapa-forma {
+  fill: var(--teal-claro);
+  stroke: var(--teal);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+.hero-mapa figcaption {
+  margin: .55rem 0 0;
+  font-family: var(--fonte-titulo);
+  font-weight: 600;
+  font-size: .78rem;
+  text-align: center;
+  color: var(--teal-escuro);
+}
+
+/* Bolinhas que marcam os pontos de coleta dentro do desenho do estado. */
+.mapa-ponto { fill: var(--branco); stroke: var(--teal); stroke-width: 3; }
+.mapa-ponto-capital { fill: var(--laranja); stroke: var(--branco); stroke-width: 3.5; }
+
+/* Versão da área de resultado: só aparece depois que a pessoa faz a busca,
+   com o pino laranja no lugar exato do CEP informado. */
+.estado {
+  display: flex;
+  align-items: center;
+  gap: clamp(1rem, 3vw, 1.75rem);
+  margin: 0 0 clamp(1.5rem, 3vw, 2.25rem);
+  padding: clamp(1rem, 2.4vw, 1.5rem);
+  background: linear-gradient(135deg, var(--teal-claro) 0%, var(--branco) 60%);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio-g);
+  box-shadow: var(--sombra-s);
+}
+.estado-mapa {
+  flex: 0 0 auto;
+  width: clamp(150px, 24vw, 210px);
+  height: auto;
+  filter: drop-shadow(0 16px 24px rgba(52, 114, 113, .20));
+}
+.estado-forma {
+  fill: url(#mapa-sp-gradiente);
+  stroke: var(--teal);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+.estado-pin { fill: var(--laranja); stroke: var(--branco); stroke-width: 3; }
+.estado-halo {
+  fill: var(--laranja);
+  opacity: .35;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pulso-pino 2.4s ease-out infinite;
+}
+@keyframes pulso-pino {
+  0%   { transform: scale(.35); opacity: .45; }
+  70%  { transform: scale(1.4); opacity: 0; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+/* Se o CEP informado não for de São Paulo, o pino e o halo somem do desenho. */
+.estado.fora .estado-pin,
+.estado.fora .estado-halo { display: none; }
+
+.estado-texto { min-width: 0; }
+.estado-rotulo {
+  display: inline-block;
+  margin: 0 0 .45rem;
+  padding: .32rem .8rem;
+  font-family: var(--fonte-titulo);
+  font-weight: 600;
+  font-size: .72rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--laranja-escuro-2);
+  background: var(--laranja-claro);
+  border-radius: 999px;
+}
+.estado-cidade {
+  margin: 0;
+  font-family: var(--fonte-titulo);
+  font-weight: 600;
+  font-size: 1.15rem;
+  color: var(--teal-escuro);
+}
+.estado-legenda { margin: .3rem 0 0; font-size: .9rem; color: var(--tinta-suave); }
+
+@media (max-width: 620px) {
+  .estado { flex-direction: column; text-align: center; }
+  .estado-mapa { width: 150px; }
+}
+/* Quem prefere menos movimento no sistema não vê o pino pulsando. */
+@media (prefers-reduced-motion: reduce) {
+  .estado-halo { animation: none; }
+}
+
 /* ------------------------------------------------------------- Resultados -- */
 .results { padding: clamp(2.25rem, 5vw, 3.75rem) 0; background: var(--branco); }
 .section-head { max-width: 62ch; margin-bottom: clamp(1.5rem, 3vw, 2.5rem); }

@@ -58,6 +58,57 @@
   var ATRIBUICAO = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
   // ------------------------------------------------------------------------
+  // MAPA DO ESTADO DE SÃO PAULO (a "régua" do desenho feito no index.html)
+  // ------------------------------------------------------------------------
+
+  // O contorno do estado que aparece na página foi desenhado num sistema de
+  // coordenadas próprio (o viewBox "0 0 640 429"). Os números abaixo são a
+  // régua dessa projeção: eles transformam latitude/longitude reais em pontos
+  // x/y dentro do desenho, para o pino laranja cair no lugar certo do mapa.
+  var MAPA_ESTADO = {
+    // Longitude do ponto mais a oeste de São Paulo (é o x = 0 do desenho).
+    lonOeste: -53.1052,
+    // Latitude do ponto mais ao norte de São Paulo (é o y = 0 do desenho).
+    latNorte: -19.7862,
+    // Quantos pixels do desenho vale um grau de longitude (já com a correção
+    // do "achatamento" do planeta na latitude média do estado).
+    escalaX: 71.59157,
+    // Quantos pixels do desenho vale um grau de latitude.
+    escalaY: 77.516831,
+    // Tamanho do desenho, igual ao declarado no viewBox do index.html.
+    largura: 640,
+    altura: 429
+  };
+
+  // Converte latitude/longitude reais em um ponto x/y do desenho do estado.
+  function pontoNoEstado(lat, lng) {
+    return {
+      // Quanto mais a leste (longitude maior), mais para a direita do desenho.
+      x: (lng - MAPA_ESTADO.lonOeste) * MAPA_ESTADO.escalaX,
+      // Quanto mais ao sul (latitude menor), mais para baixo do desenho.
+      y: (MAPA_ESTADO.latNorte - lat) * MAPA_ESTADO.escalaY
+    };
+  }
+
+  // Tira do endereço completo apenas o nome da cidade.
+  // Ex.: "Praça da República, República, São Paulo - SP" devolve "São Paulo".
+  function nomeDaCidade(endereco) {
+    // Separa o endereço pelas vírgulas e percorre os pedaços de trás para
+    // frente, porque a cidade costuma ser um dos últimos itens.
+    var pedacos = (endereco || '').split(',');
+    for (var i = pedacos.length - 1; i >= 0; i--) {
+      // "São Paulo - SP" vira "São Paulo" (corta a sigla do estado).
+      var parte = pedacos[i].split(' - ')[0].trim();
+      // Ignora pedaços vazios, o "Brasil" do fim e siglas de 2 letras (UF).
+      if (parte && parte.toLowerCase() !== 'brasil' && !/^[A-Z]{2}$/.test(parte)) {
+        return parte;
+      }
+    }
+    // Se nada com cara de cidade foi encontrado, devolve vazio (a tela usa um texto padrão).
+    return '';
+  }
+
+  // ------------------------------------------------------------------------
   // ATALHOS PARA OS ELEMENTOS DA PÁGINA
   // ------------------------------------------------------------------------
 
@@ -99,7 +150,17 @@
     // O botãozinho de menu, que só aparece no celular.
     navToggle: document.querySelector('.nav-toggle'),
     // O menu de navegação do topo da página.
-    nav: document.getElementById('menu-principal')
+    nav: document.getElementById('menu-principal'),
+    // O bloco com o mapa do estado que aparece junto com o resultado da busca.
+    estadoBloco: document.getElementById('estado'),
+    // O pino laranja que marca a região do CEP dentro do mapa do estado.
+    estadoPin: document.getElementById('estado-pin'),
+    // O círculo pulsante que anima em volta desse pino.
+    estadoHalo: document.getElementById('estado-halo'),
+    // A linha com o nome da cidade encontrada.
+    estadoCidade: document.getElementById('estado-cidade'),
+    // A frase de apoio embaixo do nome da cidade.
+    estadoLegenda: document.getElementById('estado-legenda')
   // Fecha o objeto el.
   };
 
@@ -795,6 +856,55 @@
   }
 
   /* ========================================================================
+     MAPA DO ESTADO (o desenho que acompanha o resultado da busca)
+     ====================================================================== */
+
+  // Põe o pino laranja no lugar do estado onde caiu a região do CEP e escreve
+  // o nome da cidade ao lado. Se o CEP for de fora de São Paulo, esconde o pino
+  // em vez de marcá-lo num lugar errado do desenho.
+  function desenharNoEstado(usuario) {
+    // Se a página não tiver o bloco do estado, não há o que desenhar.
+    if (!el.estadoBloco || !el.estadoPin) return;
+
+    // Converte a latitude/longitude reais em um ponto x/y do desenho.
+    var ponto = pontoNoEstado(usuario.lat, usuario.lng);
+
+    // O pino só faz sentido dentro da área do desenho (0..640 no x, 0..429 no y).
+    var dentroDoDesenho = ponto.x >= 0 && ponto.x <= MAPA_ESTADO.largura &&
+                          ponto.y >= 0 && ponto.y <= MAPA_ESTADO.altura;
+
+    // Move o pino laranja para a posição calculada.
+    el.estadoPin.setAttribute('cx', ponto.x);
+    el.estadoPin.setAttribute('cy', ponto.y);
+
+    // O círculo pulsante acompanha o pino, um pouco maior que ele.
+    if (el.estadoHalo) {
+      el.estadoHalo.setAttribute('cx', ponto.x);
+      el.estadoHalo.setAttribute('cy', ponto.y);
+    }
+
+    // A classe "fora" é o que faz o CSS esconder o pino quando o CEP não é de SP.
+    el.estadoBloco.classList.toggle('fora', !dentroDoDesenho);
+
+    // Descobre o nome da cidade a partir do endereço que veio da consulta do CEP.
+    var cidade = nomeDaCidade(usuario.endereco);
+
+    // Texto principal: a cidade encontrada ou o aviso de que o CEP é de outro estado.
+    if (el.estadoCidade) {
+      el.estadoCidade.textContent = dentroDoDesenho
+        ? (cidade || 'Sua região aproximada')
+        : 'CEP fora do estado de São Paulo';
+    }
+
+    // Frase de apoio, lembrando que a posição no desenho é uma aproximação.
+    if (el.estadoLegenda) {
+      el.estadoLegenda.textContent = dentroDoDesenho
+        ? 'O pino laranja mostra, por aproximação, onde cai o CEP informado dentro do estado.'
+        : 'Os pontos continuam valendo: as distâncias são calculadas mesmo quando o CEP é de outro estado.';
+    }
+  }
+
+  /* ========================================================================
      FLUXO PRINCIPAL DA BUSCA
      ====================================================================== */
 
@@ -836,6 +946,9 @@
 
   function aplicarBusca(usuario) {
     estado.usuario = usuario;
+
+    // Marca no desenho do estado onde caiu a região desta busca.
+    desenharNoEstado(usuario);
 
     if (!PONTOS.length) {
       el.resultado.hidden = false;

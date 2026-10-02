@@ -4,7 +4,7 @@ Site que recebe um **CEP**, estima a região do usuário e mostra, em um mapa, o
 **ponto de coleta mais próximo** da rede cadastrada.
 
 Cores da marca: laranja `#E35F1E`, teal `#347271` e branco `#FFFFFF`.
-Imagens da marca em `OsAssets/` (logo `1000055502.png`, ilustração `1000055501.png`).
+Imagens da marca em `OsAssets/` (logo `logo.png`, ilustração `animais.png`).
 
 ---
 
