@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="EcoPatas — informe seu CEP e encontre o ponto de coleta e descarte responsável mais próximo de você." />
+  <meta name="theme-color" content="#347271" />
+  <title>EcoPatas | Encontre o ponto de coleta mais próximo pelo CEP</title>
+
+  <link rel="icon" type="image/png" href="OsAssets/animais.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+
+  <header class="site-header" id="topo">
+    <div class="container header-inner">
+      <a class="brand" href="#topo" aria-label="EcoPatas — página inicial">
+        <img src="OsAssets/logo.png" alt="EcoPatas" class="brand-logo" width="220" height="60" />
+      </a>
+
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="menu-principal">
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+        <span class="sr-only">Abrir menu</span>
+      </button>
+
+      <nav class="site-nav" id="menu-principal" aria-label="Navegação principal">
+        <ul>
+          <li><a href="#busca">Buscar por CEP</a></li>
+          <li><a href="#como-funciona">Como funciona</a></li>
+          <li><a href="#impacto">Impacto</a></li>
+          <li><a class="nav-cta" href="#busca">Encontrar ponto</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="conteudo">
+    <section class="hero" id="busca">
+      <div class="container hero-grid">
+        <div class="hero-text">
+          <p class="eyebrow">Descarte responsável perto de você</p>
+          <h1>Informe seu CEP e encontre o <span class="txt-teal">ponto de coleta</span> mais próximo</h1>
+          <p class="lead">
+            A ONG EcoPatas cruza o seu CEP com a rede de pontos de coleta cadastrados e mostra,
+            no mapa, qual está mais perto de você &mdash; com endereço, horário de
+            funcionamento e o que cada ponto recebe.
+          </p>
+
+          <form class="cep-form" id="form-cep" novalidate>
+            <label class="sr-only" for="campo-cep">Digite seu CEP</label>
+            <div class="cep-field">
+              <span class="cep-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11z" /><circle cx="12" cy="10" r="2.5" /></svg>
+              </span>
+              <input
+                id="campo-cep"
+                name="cep"
+                type="text"
+                inputmode="numeric"
+                autocomplete="postal-code"
+                placeholder="00000-000"
+                maxlength="9"
+                aria-describedby="cep-ajuda"
+                required
+              />
+              <button type="submit" class="btn btn-primary" id="btn-buscar">Buscar ponto</button>
+            </div>
+            <p class="field-help" id="cep-ajuda">
+              Digite os 8 números do CEP. Usamos apenas o CEP para estimar a sua região &mdash; nada é salvo.
+            </p>
+            <button type="button" class="btn btn-ghost" id="btn-geo">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="7" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" /></svg>
+              Usar minha localização atual
+            </button>
+            <p class="form-feedback" id="cep-feedback" role="status" aria-live="polite"></p>
+          </form>
+
+          <p class="demo-flag">
+            <strong>Atenção:</strong> Após você colocar seu CEP, aparecerá a aba de filtragem.
+            O ponto mais proximo de você pode não ter o tipo item ou itens que deseja doa-lo, por isso é importante
+            que filtre antes da certeza de levar oque deseja.
+          </p>
+        </div>
+
+        <div class="hero-art">
+          
+          <figure class="mapa-redondo" id="mapa-redondo"><!-- moldura que envolve o mapa redondo e a legenda -->
+            <div class="mapa-redondo__mapa" id="mapa-hero" role="img" aria-label="Mapa com os pontos de coleta no estado de São Paulo"></div><!-- caixa redonda onde o Google Maps é desenhado pelo app.js -->
+            <figcaption class="mapa-redondo__legenda">Rede de pontos de coleta em São Paulo</figcaption><!-- legenda embaixo do mapa -->
+          </figure><!-- fim da moldura do mapa redondo -->
+
+          <img
+            src="OsAssets/ALogo.png"
+            alt="Ilustração de um cachorro e um gato brincando com bolinhas turquesa"
+            class="hero-image"
+          />
+        </div>
+      </div>
+    </section>
+
+    <section class="results" id="resultado" hidden aria-labelledby="resultado-titulo">
+      <div class="container">
+        <header class="section-head">
+          <p class="eyebrow">Resultado da busca</p>
+          <h2 id="resultado-titulo">O ponto de coleta mais próximo de você</h2>
+          <p class="section-sub" id="resultado-resumo"></p>
+        </header>
+
+        <section class="filtro-painel" aria-labelledby="filtro-titulo"><!-- NOVO: painel do filtro, logo acima do mapa e do cartão -->
+          <div class="filtro-topo"><!-- linha de cima: selo "FILTRO", título e instrução -->
+            <span class="filtro-selo"><!-- selo laranja que deixa claro que esta área é um FILTRO -->
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18l-7 8v6l-4 2v-8z" /></svg><!-- ícone de funil, símbolo universal de filtro -->
+              Filtro
+            </span>
+            <h3 id="filtro-titulo">Filtrar pontos pelo que você quer doar</h3><!-- título que diz exatamente o que a área faz -->
+            <p class="filtro-dica">Marque um ou mais itens: a lista e o mapa mostram só os pontos que aceitam <strong>todos</strong> os itens marcados; os outros ficam esmaecidos.</p><!-- instrução de uso, com a regra explícita -->
+          </div>
+          <div class="filters" id="filtros" role="group" aria-label="Filtrar pontos por material aceito"></div><!-- o app.js desenha aqui os botões (Todos, Tampinhas...) -->
+          <p class="filtro-status" id="filtro-status" role="status" aria-live="polite"></p><!-- frase que confirma o filtro ativo; aria-live avisa leitores de tela -->
+        </section>
+
+        <div class="results-grid">
+          <article class="card card-nearest" id="card-destaque"></article>
+
+          <div class="card card-map">
+            <div class="card-head">
+              <h3>Mapa da região</h3>
+              <ul class="legend">
+                <li><span class="dot dot-user" aria-hidden="true"></span> Sua região aproximada</li>
+                <li><span class="dot dot-nearest" aria-hidden="true"></span> Ponto mais próximo</li>
+                <li><span class="dot dot-other" aria-hidden="true"></span> Outros pontos</li>
+              </ul>
+            </div>
+            <div id="mapa" class="map" role="region" aria-label="Mapa com a sua região e os pontos de coleta"></div>
+            <p class="map-note">
+              A sua posição no mapa é aproximada: usamos o centro do CEP informado, não o seu endereço exato.
+              Mapas © <a href="https://www.google.com/maps" target="_blank" rel="noopener">Google Maps</a>.
+            </p>
+          </div>
+        </div>
+
+        <div class="list-block">
+          <div class="list-head"><!-- cabeçalho da lista: agora só o título (o filtro subiu para o topo) -->
+            <h3>Todos os pontos desta busca</h3><!-- título da lista -->
+          </div>
+          <ul class="points-list" id="lista-pontos"></ul>
+          <p class="empty-state" id="lista-vazia" hidden>Nenhum ponto desta busca aceita o material selecionado.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="how" id="como-funciona">
+      <div class="container">
+        <header class="section-head section-head-center">
+          <p class="eyebrow">Como funciona</p>
+          <h2>Três passos até o descarte certo</h2>
+          <p class="section-sub">Sem cadastro e sem guardar a sua localização: todo o cálculo acontece no seu navegador.</p>
+        </header>
+        <ol class="steps">
+          <li class="step">
+            <span class="step-num">1</span>
+            <h3>Digite o CEP</h3>
+            <p>Buscamos o endereço e as coordenadas aproximadas do CEP em bases públicas (BrasilAPI e ViaCEP) e, quando preciso, convertemos o endereço em coordenadas com o OpenStreetMap.</p>
+          </li>
+          <li class="step">
+            <span class="step-num">2</span>
+            <h3>Comparamos as distâncias</h3>
+            <p>Calculamos a distância em linha reta até cada ponto de coleta cadastrado e ordenamos a lista do mais perto para o mais distante.</p>
+          </li>
+          <li class="step">
+            <span class="step-num">3</span>
+            <h3>Escolha e leve seus itens</h3>
+            <p>Veja endereço, horário, contato e quais materiais cada ponto aceita. Dá para abrir a rota no mapa em um toque.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="impact" id="impacto">
+      <div class="container impact-grid">
+        <div class="impact-text">
+          <p class="eyebrow eyebrow-light">Impacto</p>
+          <h2>Uma rede de pontos, um destino certo para cada material</h2>
+          <p>
+            Cada item descartado no lugar correto evita a contaminação do solo e da água e devolve
+            matéria-prima para a cadeia produtiva. Escolher o ponto mais próximo também reduz o
+            deslocamento &mdash; e é por isso que o EcoPatas começa sempre pela distância.
+          </p>
+          <ul class="materials" id="materiais-resumo"></ul>
+        </div>
+        <ul class="stats">
+          <li><strong data-stat="pontos">—</strong><span>pontos cadastrados</span></li>
+          <li><strong data-stat="materiais">—</strong><span>tipos de material aceitos</span></li>
+          <li><strong data-stat="cidades">—</strong><span>cidades atendidas</span></li>
+        </ul>
+      </div>
+      <p class="container stats-note">Números calculados em tempo real a partir da base atual do projeto (dados de demonstração).</p>
+    </section>
+
+    <section class="cta">
+      <div class="container cta-inner">
+        <img src="OsAssets/ALogo.png" alt="" aria-hidden="true" class="cta-art" />
+        <div class="cta-text">
+          <h2>Tem um ponto de coleta para cadastrar?</h2>
+          <p>
+            ONGs, pet shops, clínicas veterinárias, condomínios e órgãos públicos podem entrar na rede.
+            Basta enviar nome, endereço, horário de funcionamento e os materiais aceitos.
+          </p>
+          <a class="btn btn-primary" id="link-contato" href="#">Quero cadastrar um ponto</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <img src="OsAssets/ALogo.png" alt="EcoPatas" width="180" height="49" />
+        <p>Descarte responsável com quem você ama. Encontre o ponto de coleta mais próximo pelo seu CEP.</p>
+      </div>
+      <nav class="footer-nav" aria-label="Links do rodapé">
+        <h3>Navegar</h3>
+        <ul>
+          <li><a href="#busca">Buscar por CEP</a></li>
+          <li><a href="#como-funciona">Como funciona</a></li>
+          <li><a href="#impacto">Impacto</a></li>
+        </ul>
+      </nav>
+      <div class="footer-nav">
+        <h3>Projeto</h3>
+        <ul>
+          <li><a href="LEIA-ME.md">Como editar os pontos</a></li>
+          <li><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">Dados do mapa</a></li>
+          <li><a href="https://brasilapi.com.br/docs" target="_blank" rel="noopener">API de CEP</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <p>&copy; <span id="ano-atual">2026</span> EcoPatas &mdash; projeto em demonstração. Não substitui as orientações do seu município.</p>
+    </div>
+  </footer>
+
+  <script
+    async
+    defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA3MOQzJGJizX-gfOvHDndy-Us9UlQ9His&callback=__epMapsCarregado"
+    crossorigin=""
+    referrerpolicy="no-referrer-when-downgrade"
+  ></script>
+  <script src="js/pontos.js"></script>
+  <script src="js/materiais.js"></script><!-- NOVO: lista de itens aceitos (substitui a lista antiga do pontos.js) -->
+  <script src="js/app.js"></script>
+</body>
+</html>
