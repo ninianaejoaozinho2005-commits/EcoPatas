@@ -1,6 +1,5 @@
 /* ==========================================================================
    EcoPatas - logica da tel
-   
    --------------------------------------------------------------------------
    Fluxo: CEP -> endereco + coordenadas aproximadas (BrasilAPI / ViaCEP +
    Nominatim) -> distancia em linha reta (Haversine) -> ponto mais proximo ->

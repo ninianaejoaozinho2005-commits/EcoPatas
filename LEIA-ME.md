@@ -103,6 +103,7 @@ Nada é gravado em servidor: todo o cálculo acontece no navegador.
 
 ## Avisos importantes
 
+
 - A base em `js/pontos.js` contém **dados fictícios de demonstração** (nomes,
   endereços, telefones e CEPs inventados). Troque por dados reais antes de publicar.
 - A distância exibida é **em linha reta**; a rota real pode ser maior.

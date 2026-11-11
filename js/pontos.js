@@ -1,5 +1,6 @@
 /* ==========================================================================
    EcoPatas - BASE DE PONTOS DE COLETA
+   
    --------------------------------------------------------------------------
    ATENCAO: os registros abaixo sao EXEMPLOS FICTICIOS ("dados de demonstracao").
    Nomes de estabelecimentos, enderecos e coordenadas foram inventados apenas
