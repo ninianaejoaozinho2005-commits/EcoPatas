@@ -47,7 +47,7 @@ Cada ponto precisa destes campos:
 | `bairro` | `'Centro'` | |
 | `cidade` | `'São Paulo'` | |
 | `uf` | `'SP'` | |
-| `cep` | `'01001-000'` | com ou sem traço |
+| `cep` | `'01001-000'` | com ou sem traço; o site busca a lat/lng exata por ele (BrasilAPI) e guarda no navegador. Sem coordenada no CEP, valem `lat`/`lng` |
 | `telefone` | `'(11) 90000-0000'` | opcional |
 | `horario` | `'Seg a sex, 9h às 18h'` | |
 | `materiais` | `['medicamentos', 'racao']` | use os ids de `ECOPATAS_MATERIAIS` |
@@ -74,7 +74,6 @@ Para incluir um material novo: acrescente um item nessa lista
 
 | Chave | Para que serve |
 |---|---|
-| `contatoEmail` | destino do botão “Quero cadastrar um ponto” |
 | `raioKm` | raio máximo considerado (km) |
 | `limitePontos` | quantos pontos exibir na lista e no mapa |
 | `raioIncertezaCepMetros` | raio do círculo de incerteza desenhado sobre o CEP |
@@ -118,7 +117,7 @@ Nada é gravado em servidor: todo o cálculo acontece no navegador.
 ## Próximos passos sugeridos
 
 - [ ] Substituir os dados de demonstração por pontos reais verificados.
-- [ ] Definir o e-mail de contato do projeto (`contatoEmail` e `contatoTecnico`).
+- [ ] Definir o e-mail técnico do projeto (`contatoTecnico`).
 - [ ] Publicar em um serviço estático (GitHub Pages, Netlify, Vercel) para ganhar HTTPS
       — a geolocalização do navegador exige HTTPS.
 - [ ] Revisar textos legais (política de privacidade e aviso de cookies, se houver).

@@ -778,22 +778,6 @@ code {
   color: var(--branco-suave);
 }
 
-/* -------------------------------------------------------------------- CTA */
-.cta { padding: clamp(2.5rem, 5vw, 4rem) 0; background: var(--laranja-claro); }
-.cta-inner {
-  display: flex;
-  align-items: center;
-  gap: clamp(1.25rem, 4vw, 3rem);
-  background: var(--branco);
-  border: 1px solid var(--linha);
-  border-radius: var(--raio-g);
-  box-shadow: var(--sombra);
-  padding: clamp(1.5rem, 3.5vw, 2.5rem);
-}
-.cta-art { width: clamp(120px, 18vw, 220px); height: auto; flex: 0 0 auto; }
-.cta-text h2 { margin-bottom: .5rem; }
-.cta-text p { color: var(--tinta-suave); max-width: 60ch; }
-
 /* ---------------------------------------------------------------- Rodape */
 .site-footer {
   background: var(--teal-escuro);
@@ -862,7 +846,6 @@ code {
   .nav-cta { text-align: center; margin-top: .5rem; }
   .nav-toggle { display: flex; }
   .footer-grid { grid-template-columns: 1fr 1fr; }
-  .cta-inner { flex-direction: column; align-items: center; text-align: center; }
 }
 
 @media (max-width: 620px) {

@@ -22,8 +22,7 @@
   var PADRAO = {
     // Nome da marca, guardado para textos internos.
     marca: 'EcoPatas',
-    // E-mail que recebe o contato do botão "Quero cadastrar um ponto" (endereço de exemplo: troque).
-    contatoEmail: 'contato@exemplo.com.br',
+    // REMOVIDO: o e-mail do botão "Quero cadastrar um ponto" (a seção de cadastro deixou de existir).
     // E-mail técnico exigido pela política de uso do serviço Nominatim (OpenStreetMap).
     contatoTecnico: 'contato@exemplo.com.br',
     // Distância máxima, em quilômetros, para um ponto ainda ser considerado viável.
@@ -170,8 +169,7 @@
     materiaisResumo: document.getElementById('materiais-resumo'),
     // O ano que aparece no rodapé (preenchido automaticamente pelo JavaScript).
     ano: document.getElementById('ano-atual'),
-    // O link "Quero cadastrar um ponto".
-    linkContato: document.getElementById('link-contato'),
+    // REMOVIDO: atalho do link "Quero cadastrar um ponto" (a seção foi apagada do site).
     // O botãozinho de menu, que só aparece no celular.
     navToggle: document.querySelector('.nav-toggle'),
     // O menu de navegação do topo da página.
@@ -586,8 +584,8 @@
     // Decide a frase que explica de onde a distância foi medida:
     // se a busca veio de um CEP, mostra o CEP; se veio do GPS, mostra "sua localização".
     var referencia = usuario.cep
-      ? 'em linha reta a partir do CEP ' + escaparHtml(formatarCep(usuario.cep))
-      : 'em linha reta a partir da sua localização';
+      ? 'a partir do CEP ' + escaparHtml(formatarCep(usuario.cep)) // MUDANÇA: tirei o "em linha reta"; fica só a origem
+      : 'a partir da sua localização'; // MUDANÇA: idem
 
     // Aqui começa a montar o conteúdo HTML do cartão, pedaço por pedaço.
     el.destaque.innerHTML =
@@ -674,7 +672,7 @@
           // Distância em destaque.
           '<strong>' + formatarDistancia(ponto.distancia) + '</strong>' +
           // Legenda embaixo do número, diferente para o primeiro item.
-          '<span>' + (ponto.aceita && indice === 0 ? 'mais próximo' : 'em linha reta') + '</span>' +
+          '<span>' + (ponto.aceita && indice === 0 ? 'mais próximo' : '') + '</span>' +
           // Dois links rápidos: abrir a rota e centralizar o mapa.
           '<div class="point-links">' +
             // Link para o Google Maps (abre em aba nova).
@@ -835,26 +833,7 @@
      MAPA (Google Maps API com a chave informada)
      ====================================================================== */
 
-  function pinSvg(cor, numero) {
-    var centro = numero
-      ? '<text x="15" y="19.5" text-anchor="middle" font-size="12" font-weight="700" fill="' +
-          cor + '" font-family="Poppins, Arial, sans-serif">' + numero + '</text>'
-      : '<circle cx="15" cy="15" r="5" fill="' + cor + '"/>';
-
-    return '<svg width="30" height="40" viewBox="0 0 30 40" aria-hidden="true">' +
-      '<path d="M15 0C6.7 0 0 6.7 0 15c0 10.5 15 25 15 25s15-14.5 15-25C30 6.7 23.3 0 15 0z" fill="' + cor + '"/>' +
-      '<circle cx="15" cy="15" r="9.5" fill="#FFFFFF"/>' + centro + '</svg>';
-  }
-
-  function iconePonto(numero, destaque) {
-    return L.divIcon({
-      className: 'pin',
-      html: pinSvg(destaque ? '#E35F1E' : '#347271', numero),
-      iconSize: [30, 40],
-      iconAnchor: [15, 40],
-      popupAnchor: [0, -34]
-    });
-  }
+  // REMOVIDO: pinSvg e iconePonto eram restos do Leaflet (biblioteca que não é mais carregada) e nunca eram chamados. Menos código = site mais leve.
 
   async function iniciarMapa() {
     if (estado.mapa) return estado.mapa;
@@ -978,7 +957,8 @@
       var conteudo =
         '<b>' + escaparHtml(ponto.nome) + '</b>' +
         escaparHtml(montarEndereco(ponto)) + '<br>' +
-        formatarDistancia(ponto.distancia) + ' em linha reta' +
+        formatarDistancia(ponto.distancia) + // MUDANÇA: só a medida (m ou km), sem "em linha reta"
+        
         (destaque ? '<br><strong>Ponto mais próximo</strong>' : '');
       marcador.addListener('click', (function (c, p) {
         return function () {
@@ -1088,6 +1068,8 @@
   var mapaHero = null;
   // Guarda o marcador laranja da região do usuário no mapa redondo.
   var marcadorUsuarioHero = null;
+  // NOVO: marcadores do mapa redondo indexados pelo id do ponto.
+  var estadoHero = {};
 
   // Cria o mapa redondo e espalha um ponto verde para cada ponto de coleta.
   async function iniciarMapaHero() {
@@ -1120,7 +1102,8 @@
       // ...aumenta a caixa para incluir essa posição.
       limites.extend(pos);
       // ...e desenha uma bolinha branca com borda verde (o mesmo estilo dos pontinhos do mapa antigo).
-      new maps.Marker({
+      // MUDANÇA: guarda o marcador em estadoHero[id] para poder mover a bolinha quando o CEP trouxer a posição exata.
+      estadoHero[ponto.id] = new maps.Marker({
         // Onde a bolinha fica.
         position: pos,
         // Em qual mapa ela aparece.
@@ -1198,7 +1181,7 @@
       '. Encontramos <strong>' + lista.length + '</strong> ' +
       (lista.length === 1 ? 'ponto de coleta' : 'pontos de coleta') +
       ' e o mais próximo está a <strong>' + formatarDistancia(proximo.distancia) +
-      '</strong> em linha reta.';
+      '</strong>.'; // MUDANÇA: sem "em linha reta"
   }
 
   async function aplicarBusca(usuario) {
@@ -1295,49 +1278,214 @@
     });
   }
 
-  function usarLocalizacaoAtual() {
+  // NOVO: traduz o código de erro do navegador em uma mensagem que diz o que fazer.
+  function mensagemErroGeo(erro) {
+    // Código 1 = a pessoa (ou o navegador) negou a permissão de localização.
+    if (erro && erro.code === 1) {
+      // Abrir o index.html direto do disco (file://) faz o navegador bloquear a localização sem nem perguntar.
+      if (location.protocol === 'file:') return 'O navegador bloqueia a localização em arquivos abertos direto do computador. Abra o site pelo Live Server (ou publicado em https) ou informe o CEP.';
+      // Caso comum: permissão negada. Explica onde liberar.
+      return 'A permissão de localização foi negada. Clique no cadeado ao lado do endereço do site, permita a "Localização" e toque no botão de novo — ou informe o CEP.';
+    }
+    // Código 2 = o aparelho não conseguiu descobrir onde está (GPS/Wi-Fi/rede indisponíveis).
+    if (erro && erro.code === 2) return 'O aparelho não conseguiu descobrir a sua posição agora. Ligue o GPS/Wi-Fi e tente de novo — ou informe o CEP.';
+    // Código 3 = demorou demais.
+    if (erro && erro.code === 3) return 'A localização demorou demais para responder. Tente de novo em um lugar com melhor sinal — ou informe o CEP.';
+    // Qualquer outro caso.
+    return 'Não foi possível obter a sua localização. Informe o CEP para continuar.';
+  }
+
+  // NOVO: transforma o getCurrentPosition (que usa callbacks) em uma Promise, para podermos usar await.
+  function pedirPosicao(opcoes) {
+    return new Promise(function (resolver, rejeitar) {
+      // Sucesso chama resolver; erro chama rejeitar.
+      navigator.geolocation.getCurrentPosition(resolver, rejeitar, opcoes);
+    });
+  }
+
+  // CORRIGIDO: botão "Usar minha localização atual".
+  // Antes: uma única tentativa de 10 s com precisão baixa e uma mensagem de erro igual para tudo (e erros dentro do callback sumiam).
+  // Agora: confere o ambiente, tenta o GPS (precisão alta) e, se falhar por sinal/tempo, tenta de novo pela rede; cada erro tem sua mensagem.
+  async function usarLocalizacaoAtual() {
+    // Navegador sem suporte a geolocalização.
     if (!navigator.geolocation) {
       feedback('O seu navegador não oferece localização automática. Informe o CEP.', 'erro');
       return;
     }
+    // Páginas http:// comuns (fora do localhost) são bloqueadas pelos navegadores: avisa o motivo real.
+    if (window.isSecureContext === false) {
+      feedback('A localização só funciona em página segura (https:// ou localhost). Publique o site em https ou use o Live Server — ou informe o CEP.', 'erro');
+      return;
+    }
+    // Evita cliques repetidos enquanto espera a resposta.
+    if (el.btnGeo) el.btnGeo.disabled = true;
+    definirCarregando(true, 'Obtendo a sua localização... se o navegador perguntar, toque em "Permitir".');
 
-    definirCarregando(true, 'Obtendo a sua localização...');
-
-    navigator.geolocation.getCurrentPosition(async function (posicao) {
-      var usuario = {
-        lat: posicao.coords.latitude,
-        lng: posicao.coords.longitude,
-        cep: '',
-        endereco: '',
-        aproximado: false,
-        precisao: posicao.coords.accuracy || 400,
-        origem: 'GPS do dispositivo'
-      };
-
-      definirCarregando(false);
-      feedback('Localização obtida pelo dispositivo (precisão de aproximadamente ' +
-        Math.round(usuario.precisao) + ' m).', 'ok');
-      await aplicarBusca(usuario);
-
-      if (el.resultado.scrollIntoView) {
-        el.resultado.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    var posicao = null;
+    try {
+      // 1ª tentativa: GPS/alta precisão, sem usar posição guardada (maximumAge 0), até 15 s.
+      posicao = await pedirPosicao({ enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+    } catch (erro1) {
+      // Se foi negado (código 1) não adianta tentar de novo: mostra a mensagem e para.
+      if (erro1 && erro1.code === 1) {
+        definirCarregando(false);
+        if (el.btnGeo) el.btnGeo.disabled = false;
+        feedback(mensagemErroGeo(erro1), 'erro');
+        return;
       }
+      try {
+        // 2ª tentativa: precisão baixa (Wi-Fi/rede), mais rápida em desktops; aceita posição de até 5 min atrás.
+        posicao = await pedirPosicao({ enableHighAccuracy: false, timeout: 20000, maximumAge: 300000 });
+      } catch (erro2) {
+        definirCarregando(false);
+        if (el.btnGeo) el.btnGeo.disabled = false;
+        feedback(mensagemErroGeo(erro2), 'erro');
+        return;
+      }
+    }
 
-      geocodificarReverso(usuario.lat, usuario.lng).then(function (endereco) {
-        if (!endereco) return;
-        usuario.endereco = endereco;
-        // Considera só os pontos que aceitam os itens marcados (sem filtro, são todos).
-        var aceitosGeo = estado.ordenados.filter(function (ponto) { return ponto.aceita; });
-        // Atualiza o resumo apenas se existir algum ponto aceito.
-        if (aceitosGeo.length) {
-          atualizarResumo(usuario, aceitosGeo, aceitosGeo[0]);
-        }
-      });
-    }, function () {
-      definirCarregando(false);
-      feedback('Não foi possível obter a sua localização. Informe o CEP para continuar.', 'erro');
-    }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 });
+    // Aqui já temos a posição: monta o "usuario" no mesmo formato usado pela busca por CEP.
+    var usuario = {
+      lat: posicao.coords.latitude,
+      lng: posicao.coords.longitude,
+      cep: '',
+      endereco: '',
+      aproximado: false,
+      precisao: posicao.coords.accuracy || 400,
+      origem: 'GPS do dispositivo'
+    };
+
+    definirCarregando(false);
+    if (el.btnGeo) el.btnGeo.disabled = false;
+    feedback('Localização obtida pelo dispositivo (precisão de aproximadamente ' + Math.round(usuario.precisao) + ' m).', 'ok');
+
+    // NOVO: try/catch para que um erro ao desenhar o resultado apareça na tela em vez de sumir em silêncio.
+    try {
+      await aplicarBusca(usuario);
+    } catch (erro3) {
+      feedback('Localizamos você, mas houve um erro ao montar o resultado. Recarregue a página e tente de novo.', 'erro');
+      return;
+    }
+
+    // Rola a página até o resultado.
+    if (el.resultado.scrollIntoView) el.resultado.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Em segundo plano, descobre o endereço da posição (só para o texto do resumo).
+    geocodificarReverso(usuario.lat, usuario.lng).then(function (endereco) {
+      if (!endereco) return;
+      usuario.endereco = endereco;
+      var aceitosGeo = estado.ordenados.filter(function (ponto) { return ponto.aceita; });
+      if (aceitosGeo.length) atualizarResumo(usuario, aceitosGeo, aceitosGeo[0]);
+    });
   }
+
+  /* ========================================================================
+     NOVO: POSIÇÃO EXATA DE CADA PONTO PELO CEP (latitude/longitude)
+     ====================================================================== */
+
+  // Chave e validade do cache guardado no navegador (assim cada CEP é consultado só uma vez a cada 30 dias).
+  var CHAVE_CACHE_CEP = 'ecopatas_coords_cep_v1';
+  var VALIDADE_CACHE_MS = 30 * 24 * 60 * 60 * 1000;
+  // Se a coordenada do CEP cair a mais de 25 km da posição reserva do ponto, ela é descartada (protege contra CEP errado).
+  var TOLERANCIA_KM = 25;
+
+  // Lê o cache (devolve {} se não existir ou se o navegador bloquear o armazenamento).
+  function lerCacheCep() {
+    try {
+      var obj = JSON.parse(localStorage.getItem(CHAVE_CACHE_CEP) || '{}');
+      return obj && typeof obj === 'object' ? obj : {};
+    } catch (e) { return {}; }
+  }
+  // Grava o cache (se falhar, tudo continua funcionando, só sem guardar).
+  function gravarCacheCep(cache) {
+    try { localStorage.setItem(CHAVE_CACHE_CEP, JSON.stringify(cache)); } catch (e) { /* sem armazenamento: ignora */ }
+  }
+
+  // Aplica lat/lng de um CEP a todos os pontos que usam esse CEP. Devolve true se algum ponto mudou.
+  function aplicarCoordenadaDoCep(cep, lat, lng) {
+    var mudou = false;
+    PONTOS.forEach(function (ponto) {
+      // Só mexe em pontos deste CEP e com coordenada plausível (perto da posição reserva).
+      if (soDigitos(ponto.cep) !== cep) return;
+      if (!isFinite(lat) || !isFinite(lng)) return;
+      if (distanciaKm(lat, lng, ponto.lat, ponto.lng) > TOLERANCIA_KM) return;
+      ponto.lat = lat; ponto.lng = lng; ponto.refinado = true; mudou = true;
+    });
+    return mudou;
+  }
+
+  // Move as bolinhas do mapa redondo para as posições refinadas.
+  function atualizarMarcadoresHero() {
+    PONTOS.forEach(function (ponto) {
+      if (estadoHero[ponto.id]) estadoHero[ponto.id].setPosition({ lat: ponto.lat, lng: ponto.lng });
+    });
+  }
+
+  // Consulta (poucas por vez) os CEPs ainda desconhecidos e atualiza os pontos.
+  async function refinarPontosPorCep() {
+    var cache = lerCacheCep();
+    var agora = Date.now();
+    var mudou = false;
+    var fila = [];
+    var vistos = {};
+    // Passo 1: usa o que já está no cache e separa os CEPs que faltam.
+    PONTOS.forEach(function (ponto) {
+      var cep = soDigitos(ponto.cep);
+      if (cep.length !== 8 || vistos[cep]) return;
+      vistos[cep] = true;
+      var guardado = cache[cep];
+      if (guardado && agora - guardado.t < VALIDADE_CACHE_MS) {
+        if (guardado.lat != null && aplicarCoordenadaDoCep(cep, guardado.lat, guardado.lng)) mudou = true;
+      } else {
+        fila.push(cep);
+      }
+    });
+    // Passo 2: consulta a BrasilAPI, 4 CEPs ao mesmo tempo (leve para o navegador e para a API).
+    var parar = false;
+    async function trabalhador() {
+      while (fila.length && !parar) {
+        var cep = fila.shift();
+        try {
+          var dados = await consultarBrasilApi(cep);
+          var c = dados.location && dados.location.coordinates;
+          var lat = c ? parseFloat(c.latitude) : NaN;
+          var lng = c ? parseFloat(c.longitude) : NaN;
+          // Guarda o resultado (ou "sem coordenadas") para não perguntar de novo.
+          cache[cep] = isFinite(lat) && isFinite(lng) ? { lat: lat, lng: lng, t: Date.now() } : { t: Date.now() };
+          if (aplicarCoordenadaDoCep(cep, lat, lng)) mudou = true;
+        } catch (erro) {
+          var msg = (erro && erro.message) || '';
+          // CEP inexistente: guarda a falha. Limite de uso (429): para por hoje. Outros erros (rede): tenta na próxima visita.
+          if (msg.indexOf('não encontrado') !== -1 || msg.indexOf('(404)') !== -1) cache[cep] = { t: Date.now() };
+          if (msg.indexOf('(429)') !== -1) parar = true;
+        }
+      }
+    }
+    await Promise.all([trabalhador(), trabalhador(), trabalhador(), trabalhador()]);
+    gravarCacheCep(cache);
+    // Passo 3: se algo mudou, redesenha o mapa redondo e refaz a busca atual (a ordem por distância pode mudar).
+    if (mudou) {
+      atualizarMarcadoresHero();
+      if (estado.usuario) await aplicarBusca(estado.usuario);
+    }
+  }
+
+  // Espera a página ficar ociosa (ou 1,5 s) para não competir com o carregamento inicial.
+  function agendarRefinoPorCep() {
+    var iniciar = function () { refinarPontosPorCep().catch(function () { /* falha de rede: mantém posições reserva */ }); };
+    if (window.requestIdleCallback) window.requestIdleCallback(iniciar, { timeout: 3000 });
+    else setTimeout(iniciar, 1500);
+  }
+
+  // NOVO (opcional): no console do navegador, digite ecopatasExportarCoordenadas() para copiar as coordenadas
+  // exatas já resolvidas e colar em js/pontos.js, deixando-as fixas (sem depender de consulta nenhuma).
+  window.ecopatasExportarCoordenadas = function () {
+    var linhas = PONTOS.filter(function (p) { return p.refinado; }).map(function (p) {
+      return "{ id: '" + p.id + "', lat: " + p.lat + ', lng: ' + p.lng + ' }';
+    });
+    console.log(linhas.join(',\n'));
+    return linhas.length + ' pontos com coordenada exata pelo CEP';
+  };
 
   /* ========================================================================
      EVENTOS E INICIALIZACAO
@@ -1415,16 +1563,15 @@
   async function iniciar() {
     if (el.ano) el.ano.textContent = new Date().getFullYear();
 
-    if (el.linkContato && CFG.contatoEmail) {
-      el.linkContato.href = 'mailto:' + CFG.contatoEmail +
-        '?subject=' + encodeURIComponent('Quero cadastrar um ponto de coleta no EcoPatas');
-    }
+    // REMOVIDO: o bloco que montava o link mailto do "Quero cadastrar um ponto".
 
     renderFiltros();
     atualizarEstatisticas();
     ligarEventos();
     // NOVO: desenha o mapa redondo do topo (sem await: ele carrega sozinho e não trava o resto).
     iniciarMapaHero();
+    // NOVO: depois que a página terminou de carregar, refina a posição de cada ponto pelo CEP dele (sem travar a abertura do site).
+    agendarRefinoPorCep();
 
     if (!PONTOS.length) {
       feedback('Nenhum ponto cadastrado em js/pontos.js. Adicione registros para a busca funcionar.', 'info');
